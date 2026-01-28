@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Daily Discipline</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- PWA -->
+  <meta name="theme-color" content="#000000">
+  <link rel="manifest" href="data:application/json,{
+    &quot;name&quot;:&quot;Daily Discipline&quot;,
+    &quot;short_name&quot;:&quot;Discipline&quot;,
+    &quot;start_url&quot;:&quot;.&quot;,
+    &quot;display&quot;:&quot;standalone&quot;,
+    &quot;background_color&quot;:&quot;#000000&quot;,
+    &quot;theme_color&quot;:&quot;#000000&quot;
+  }">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #000, #111, #000);
+      color: gold;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .app {
+      background: #050505;
+      border: 2px solid gold;
+      border-radius: 20px;
+      padding: 25px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 0 20px rgba(255,215,0,0.3);
+    }
+    h1 { text-align: center; margin-bottom: 5px; }
+    .date { text-align: center; color: #aaa; margin-bottom: 20px; }
+    input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid gold;
+      background: black;
+      color: gold;
+      margin-bottom: 10px;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      background: gold;
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+    .task { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+    .done { text-decoration: line-through; color: gray; }
+    .progress { margin-top: 15px; height: 8px; background: #333; border-radius: 10px; overflow: hidden; }
+    .bar { height: 100%; background: gold; width: 0%; transition: width 0.3s; }
+    .quote { margin-top: 15px; text-align: center; font-style: italic; color: #aaa; }
+  </style>
+</head>
+
+<body>
+<div class="app">
+  <h1>Daily Discipline</h1>
+  <div class="date" id="date"></div>
+
+  <input id="goal" placeholder="🎯 Today’s Main Goal">
+  <input id="taskInput" placeholder="📝 Add a task">
+  <button onclick="addTask()">Add Task</button>
+
+  <div id="tasks"></div>
+
+  <div class="progress"><div class="bar" id="bar"></div></div>
+  <div class="quote">“Discipline today. Freedom tomorrow.”</div>
+</div>
+
+<script>
+  const today = new Date().toDateString();
+  document.getElementById("date").innerText = today;
+
+  if (localStorage.getItem("date") !== today) {
+    localStorage.setItem("date", today);
+    localStorage.setItem("tasks", JSON.stringify([]));
+    localStorage.setItem("goal", "");
+  }
+
+  let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+  const goalInput = document.getElementById("goal");
+  goalInput.value = localStorage.getItem("goal") || "";
+
+  goalInput.oninput = () =>
+    localStorage.setItem("goal", goalInput.value);
+
+  function addTask() {
+    const input = document.getElementById("taskInput");
+    if (!input.value) return;
+    tasks.push({ text: input.value, done: false });
+    input.value = "";
+    save();
+  }
+
+  function toggle(i) {
+    tasks[i].done = !tasks[i].done;
+    save();
+  }
+
+  function save() {
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+    render();
+  }
+
+  function render() {
+    const list = document.getElementById("tasks");
+    list.innerHTML = "";
+    let done = 0;
+
+    tasks.forEach((t, i) => {
+      if (t.done) done++;
+      const d = document.createElement("div");
+      d.className = "task";
+
+      const c = document.createElement("input");
+      c.type = "checkbox";
+      c.checked = t.done;
+      c.onclick = () => toggle(i);
+
+      const s = document.createElement("span");
+      s.textContent = t.text;
+      if (t.done) s.className = "done";
+
+      d.appendChild(c); d.appendChild(s);
+      list.appendChild(d);
+    });
+
+    document.getElementById("bar").style.width =
+      tasks.length ? (done / tasks.length) * 100 + "%" : "0%";
+  }
+
+  render();
+
+  if ("Notification" in window && Notification.permission !== "granted") {
+    Notification.requestPermission();
+  }
+
+  setInterval(() => {
+    const n = new Date();
+    if (n.getHours() === 21 && n.getMinutes() === 30 &&
+        Notification.permission === "granted") {
+      new Notification("Daily Discipline", {
+        body: "Plan tomorrow. Win the day. 🖤🔥"
+      });
+    }
+  }, 60000);
+</script>
+</body>
+</html>
